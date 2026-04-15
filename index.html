@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aviva · Plan de Integración</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Sora',sans-serif;background:#f1f5f9;color:#0f172a;}
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:#f1f5f9;}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+input,select,textarea,button{font-family:'Sora',sans-serif;}
+input:focus,select:focus,textarea:focus{outline:2px solid #2563EB;outline-offset:1px;}
+.mono{font-family:'DM Mono',monospace;}
+
+/* Layout */
+#app{display:flex;flex-direction:column;min-height:100vh;}
+#header{background:#0f172a;color:white;padding:14px 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+#header-left .sub{font-size:10px;letter-spacing:3px;color:#64748b;text-transform:uppercase;font-family:'DM Mono',monospace;}
+#header-left .title{font-size:18px;font-weight:800;letter-spacing:-0.5px;}
+#header-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.alert-badge{background:#FEF3C7;color:#92400E;font-size:11px;font-weight:700;padding:5px 12px;border-radius:20px;font-family:'DM Mono',monospace;display:none;}
+.btn-report{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;}
+
+/* Tabs */
+#tabs{background:#0f172a;display:flex;padding:0 28px;border-bottom:2px solid #1e293b;overflow-x:auto;}
+.tab-btn{padding:11px 18px;border:none;background:none;cursor:pointer;font-size:12px;font-weight:400;color:#64748b;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .15s;}
+.tab-btn.active{font-weight:700;color:white;border-bottom-color:#3b82f6;}
+
+/* Content */
+#content{padding:20px 28px;flex:1;}
+.view{display:none;}
+.view.active{display:block;}
+
+/* Filters bar */
+.filters{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:12px 16px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.filters input,.filters select{padding:7px 10px;border-radius:6px;border:1px solid #cbd5e1;font-size:13px;height:34px;}
+.filters input{width:240px;}
+.filters select{background:white;cursor:pointer;}
+
+/* Table */
+.tbl-wrap{background:white;border-radius:10px;border:1px solid #e2e8f0;overflow:hidden;}
+.tbl-scroll{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+thead tr{background:#0f172a;color:white;}
+th{padding:10px 10px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;font-family:'DM Mono',monospace;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .1s;}
+tbody tr:hover{background:#f8fafc!important;}
+tbody tr.critical{background:#fff5f5!important;}
+tbody tr.critical:hover{background:#fff0f0!important;}
+tbody tr.delayed{background:#fffbeb!important;}
+td{padding:8px 10px;vertical-align:top;}
+.area-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;white-space:nowrap;}
+.timing-badge{background:#f1f5f9;color:#475569;font-size:10px;padding:2px 6px;border-radius:4px;font-family:'DM Mono',monospace;}
+.status-select{padding:3px 6px;border-radius:4px;border:1px solid #e2e8f0;font-size:11px;font-family:'DM Mono',monospace;cursor:pointer;}
+.interdep{font-size:11px;color:#7c3aed;max-width:160px;}
+.riesgo{font-size:11px;color:#dc2626;max-width:140px;}
+.comment-cell{font-size:11px;color:#475569;font-style:italic;max-width:180px;}
+.act-text{max-width:220px;font-weight:500;}
+.crit-dot{color:#dc2626;font-size:12px;margin-right:4px;}
+.btn-icon{background:none;border:none;cursor:pointer;font-size:14px;padding:2px 5px;}
+.date-cell{font-family:'DM Mono',monospace;font-size:11px;color:#64748b;white-space:nowrap;}
+.date-cell.late{color:#dc2626;font-weight:700;}
+
+/* Critical banner */
+.crit-banner{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.banner{border-radius:8px;padding:10px 16px;display:flex;gap:12px;align-items:center;}
+.banner-warn{background:#FEF3C7;border:1px solid #F59E0B;}
+.banner-danger{background:#FEE2E2;border:1px solid #EF4444;}
+.banner-title{font-weight:700;font-size:13px;}
+.banner-sub{font-size:11px;margin-top:2px;}
+
+/* Area cards (panorama) */
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+.area-card{background:white;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;}
+.area-card-header{padding:14px 18px;color:white;}
+.area-card-header .id{font-size:10px;opacity:.7;letter-spacing:2px;text-transform:uppercase;font-family:'DM Mono',monospace;}
+.area-card-header .name{font-weight:800;font-size:15px;}
+.area-card-header .pct{font-size:24px;font-weight:800;}
+.progress-bar{background:rgba(255,255,255,.25);border-radius:4px;height:5px;margin-top:10px;}
+.progress-fill{background:white;height:5px;border-radius:4px;transition:width .4s;}
+.card-body{padding:14px 18px;}
+.card-stats{display:flex;gap:10px;margin-bottom:12px;}
+.stat-box{flex:1;text-align:center;background:#f8fafc;border-radius:6px;padding:6px 4px;}
+.stat-num{font-weight:700;font-size:16px;}
+.stat-lbl{font-size:9px;color:#94a3b8;margin-top:1px;}
+.timing-bars{margin-bottom:12px;}
+.timing-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.timing-lbl{font-size:10px;color:#94a3b8;width:90px;font-family:'DM Mono',monospace;}
+.bar-track{flex:1;background:#f1f5f9;border-radius:3px;height:6px;}
+.bar-fill{height:6px;border-radius:3px;}
+.timing-count{font-size:10px;color:#64748b;font-family:'DM Mono',monospace;width:40px;text-align:right;}
+.issue-item{font-size:11px;margin-bottom:4px;padding:4px 8px;border-radius:4px;}
+.issue-delayed{color:#DC2626;background:#FEF2F2;border-left:2px solid #DC2626;}
+.issue-comment{color:#475569;background:#f8fafc;}
+.btn-detail{margin-top:10px;width:100%;padding:7px 0;border:1px solid #e2e8f0;background:white;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:background .15s;}
+.btn-detail:hover{background:#f8fafc;}
+
+/* Capital */
+.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:20px;}
+.kpi-card{background:white;border-radius:12px;padding:18px 22px;border:1px solid #e2e8f0;}
+.kpi-lbl{font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;font-family:'DM Mono',monospace;}
+.kpi-val{font-size:26px;font-weight:800;font-family:'DM Mono',monospace;}
+.kpi-sub{font-size:11px;color:#94a3b8;margin-top:4px;}
+.budget-bar-wrap{background:white;border-radius:12px;border:1px solid #e2e8f0;padding:20px 24px;margin-bottom:20px;}
+.budget-bar-track{background:#f1f5f9;border-radius:6px;height:18px;overflow:hidden;}
+.budget-bar-fill{background:linear-gradient(90deg,#059669,#10b981);height:100%;border-radius:6px;transition:width .5s;display:flex;align-items:center;justify-content:flex-end;padding-right:8px;}
+.area-budget-list{background:white;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:20px;}
+.area-budget-row{padding:14px 20px;border-bottom:1px solid #f8fafc;display:flex;align-items:center;gap:16px;}
+.area-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;font-family:'DM Mono',monospace;flex-shrink:0;}
+
+/* Solicitudes */
+.urgency-section{margin-bottom:18px;}
+.urgency-header{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.urgency-dot{width:10px;height:10px;border-radius:50%;}
+.req-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:16px 20px;margin-bottom:8px;display:flex;gap:16px;align-items:flex-start;}
+.req-body{flex:1;}
+.req-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.status-badge{font-size:11px;font-weight:700;padding:3px 10px;border-radius:6px;font-family:'DM Mono',monospace;}
+.btn-small{padding:4px 10px;border-radius:5px;font-size:11px;cursor:pointer;border:none;font-weight:600;}
+.urgency-guide{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:12px 18px;margin-bottom:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;}
+.modal{background:white;border-radius:12px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,.3);}
+.modal-header{padding:18px 24px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-weight:700;font-size:15px;}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#94a3b8;line-height:1;}
+.modal-body{padding:20px 24px;}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:11px;font-weight:600;color:#64748b;margin-bottom:4px;letter-spacing:.5px;text-transform:uppercase;}
+.field input,.field select,.field textarea{padding:8px 10px;border-radius:6px;border:1px solid #cbd5e1;font-size:13px;width:100%;font-family:'Sora',sans-serif;}
+.field textarea{resize:vertical;min-height:70px;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+.form-grid .full{grid-column:1/-1;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;}
+.btn-cancel{padding:9px 20px;border-radius:7px;border:1px solid #e2e8f0;background:white;cursor:pointer;font-size:13px;}
+.btn-primary{padding:9px 20px;border-radius:7px;border:none;background:#0f172a;color:white;cursor:pointer;font-size:13px;font-weight:700;}
+.btn-success{background:#059669!important;}
+.btn-danger{background:#DC2626!important;}
+
+/* Loading */
+#loading{position:fixed;inset:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:white;}
+#loading .logo{font-size:28px;font-weight:800;margin-bottom:8px;}
+#loading .sub{font-size:13px;color:#64748b;margin-bottom:32px;}
+.spinner{width:36px;height:36px;border:3px solid #1e293b;border-top-color:#3b82f6;border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sync-indicator{font-size:11px;color:#64748b;font-family:'DM Mono',monospace;padding:4px 10px;border-radius:6px;background:#1e293b;}
+.sync-ok{color:#059669!important;}
+.sync-err{color:#dc2626!important;}
+
+/* Biweekly */
+.biweekly-item{padding:10px 14px;margin-bottom:6px;border-radius:8px;border:1px solid #e2e8f0;margin-left:14px;}
+.history-item{font-size:11px;color:#94a3b8;margin-bottom:3px;}
+
+@media(max-width:768px){
+  .kpi-grid{grid-template-columns:1fr;}
+  .filters input{width:100%;}
+  #header{padding:12px 16px;}
+  #content{padding:14px 16px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="logo">AVIVA</div>
+  <div class="sub">Plan de Integración · Cargando datos...</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- APP -->
+<div id="app" style="display:none">
+  <div id="header">
+    <div id="header-left">
+      <div class="sub">AVIVA · PLAN DE INTEGRACIÓN</div>
+      <div class="title">Centro de Gestión · Adquisición Clínica</div>
+    </div>
+    <div id="header-right">
+      <div id="delay-badge" class="alert-badge mono"></div>
+      <span id="sync-status" class="sync-indicator">⟳ sincronizando</span>
+      <button class="btn-report" onclick="openBiweekly()">📋 Reporte quincenal</button>
+    </div>
+  </div>
+
+  <div id="tabs">
+    <button class="tab-btn active" onclick="switchTab('seguimiento',this)">📋 Seguimiento</button>
+    <button class="tab-btn" onclick="switchTab('panorama',this)">🗺 Panorama integración</button>
+    <button class="tab-btn" onclick="switchTab('capital',this)">💰 Capital</button>
+    <button class="tab-btn" onclick="switchTab('solicitudes',this)">📬 Solicitudes de capital</button>
+  </div>
+
+  <div id="content">
+
+    <!-- SEGUIMIENTO -->
+    <div id="view-seguimiento" class="view active">
+      <div id="crit-banners" class="crit-banner"></div>
+      <div class="filters">
+        <input type="text" id="search" placeholder="🔍 Buscar actividad u objetivo..." oninput="renderTable()"/>
+        <select id="filter-area" onchange="renderTable()">
+          <option value="">Todas las áreas</option>
+        </select>
+        <select id="filter-timing" onchange="renderTable()">
+          <option value="">Todos los plazos</option>
+          <option>Previo al cierre</option>
+          <option>Día 30</option>
+          <option>Día 60</option>
+          <option>Día 100</option>
+          <option>Por definir</option>
+        </select>
+        <select id="filter-status" onchange="renderTable()">
+          <option value="">Todos los status</option>
+          <option>No empezado</option>
+          <option>En progreso</option>
+          <option>Retrasado</option>
+          <option>Bloqueado</option>
+          <option>Completado</option>
+        </select>
+        <span id="act-count" style="font-size:11px;color:#94a3b8;margin-left:auto;align-self:center;"></span>
+        <button class="btn-primary" onclick="openAddModal()" style="padding:7px 14px;font-size:12px;">+ Agregar actividad</button>
+      </div>
+      <div class="tbl-wrap">
+        <div class="tbl-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Área</th><th>Obj</th><th>Objetivo</th><th>Actividad</th>
+                <th>Timing</th><th>Responsable</th><th>Status</th>
+                <th>Comentario</th><th>F.Inicio</th><th>F.Fin</th>
+                <th>Interdependencias</th><th>Riesgo</th><th>⚡</th>
+              </tr>
+            </thead>
+            <tbody id="tbl-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PANORAMA -->
+    <div id="view-panorama" class="view">
+      <div id="cards-grid" class="cards-grid"></div>
+    </div>
+
+    <!-- CAPITAL -->
+    <div id="view-capital" class="view">
+      <div class="kpi-grid" id="kpi-grid"></div>
+      <div class="budget-bar-wrap" id="budget-bar-section"></div>
+      <div class="area-budget-list" id="area-budget-list"></div>
+    </div>
+
+    <!-- SOLICITUDES -->
+    <div id="view-solicitudes" class="view">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-weight:800;font-size:16px;">Solicitudes de Capital</div>
+          <div style="font-size:12px;color:#94a3b8;">Registro de necesidades de inversión por área y objetivo</div>
+        </div>
+        <button class="btn-primary" onclick="openCapReqModal(null)">+ Nueva solicitud</button>
+      </div>
+      <div class="urgency-guide" id="urgency-guide"></div>
+      <div id="solicitudes-list"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-overlay" class="modal-overlay" style="display:none" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-box">
+    <div class="modal-header">
+      <span class="modal-title" id="modal-title"></span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby1rH6E27NnGt7ZF_fiGz-OfC8KlzH688Mdj7xaGsxn-V1WWgfHYMY7etGnU5TF07yb7Q/exec';
+
+const AREA_META = {
+  'Adm y Finanzas':        {color:'#2563EB',light:'#DBEAFE',id:'ADM'},
+  'Operaciones':           {color:'#059669',light:'#D1FAE5',id:'OPS'},
+  'Legal y Regulatorio':   {color:'#D97706',light:'#FEF3C7',id:'LEG'},
+  'Comercial y Marketing': {color:'#DB2777',light:'#FCE7F3',id:'COM'},
+  'GDH':                   {color:'#7C3AED',light:'#EDE9FE',id:'GDH'},
+  'Dirección Médica':      {color:'#DC2626',light:'#FEE2E2',id:'DM'},
+  'Infraestructura':       {color:'#0284C7',light:'#E0F2FE',id:'INF'},
+};
+const AREAS = Object.keys(AREA_META);
+const STATUS_META = {
+  'No empezado': {color:'#94A3B8',bg:'#F1F5F9'},
+  'En progreso': {color:'#2563EB',bg:'#DBEAFE'},
+  'Retrasado':   {color:'#DC2626',bg:'#FEE2E2'},
+  'Bloqueado':   {color:'#D97706',bg:'#FEF3C7'},
+  'Completado':  {color:'#059669',bg:'#D1FAE5'},
+};
+const URGENCY_META = {
+  'Crítico':     {color:'#DC2626',bg:'#FEE2E2',label:'≤ 7 días'},
+  'Alto':        {color:'#D97706',bg:'#FEF3C7',label:'≤ 15 días'},
+  'Medio':       {color:'#2563EB',bg:'#DBEAFE',label:'≤ 30 días'},
+  'Planificado': {color:'#059669',bg:'#D1FAE5',label:'≤ 60 días'},
+};
+const CAPITAL_META = {
+  'Aprobado':    {color:'#059669',bg:'#D1FAE5'},
+  'En revisión': {color:'#2563EB',bg:'#DBEAFE'},
+  'Rechazado':   {color:'#DC2626',bg:'#FEE2E2'},
+  'Pendiente':   {color:'#94A3B8',bg:'#F1F5F9'},
+};
+const BUDGET_TOTAL = 15000000;
+const TIMINGS_NORM = ['Previo al cierre','Día 30','Día 60','Día 100','Por definir'];
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let activities = [];
+let capitalReqs = [];
+let areaCapital = {
+  'Adm y Finanzas':2000000,'Operaciones':3500000,'Legal y Regulatorio':500000,
+  'Comercial y Marketing':800000,'GDH':2500000,'Dirección Médica':1200000,'Infraestructura':1500000
+};
+let syncTimer = null;
+let pendingSync = false;
+
+// ─── SHEETS API ──────────────────────────────────────────────────────────────
+async function sheetsRead(sheet) {
+  const url = `${SCRIPT_URL}?action=read&sheet=${encodeURIComponent(sheet)}&t=${Date.now()}`;
+  const r = await fetch(url);
+  const j = await r.json();
+  return j.data;
+}
+
+async function sheetsWrite(sheet, data) {
+  await fetch(SCRIPT_URL, {
+    method:'POST',
+    body: JSON.stringify({sheet, data}),
+    headers:{'Content-Type':'application/json'}
+  });
+}
+
+function rowToAct(row) {
+  return {
+    id:row[0]||'', area:row[1]||'', timing:row[2]||'', objetivo:row[3]||'',
+    obj_num:row[4]||'', actividad:row[5]||'', responsable:row[6]||'',
+    fecha_ini:row[7]||'', fecha_fin:row[8]||'', originalFechaFin:row[9]||'',
+    status:row[10]||'No empezado', statusComment:row[11]||'',
+    isDelayed:row[12]==='true'||row[12]===true,
+    delayNote:row[13]||'', riesgo:row[14]||'', interdep:row[15]||'',
+    statusHistory: (() => { try{ return JSON.parse(row[16]||'[]'); }catch(e){return[];} })()
+  };
+}
+function actToRow(a) {
+  return [a.id,a.area,a.timing,a.objetivo,a.obj_num,a.actividad,a.responsable,
+    a.fecha_ini,a.fecha_fin,a.originalFechaFin,a.status,a.statusComment,
+    String(a.isDelayed),a.delayNote,a.riesgo,a.interdep,
+    JSON.stringify(a.statusHistory||[])];
+}
+const ACT_HEADER = ['id','area','timing','objetivo','obj_num','actividad','responsable',
+  'fecha_ini','fecha_fin','originalFechaFin','status','statusComment',
+  'isDelayed','delayNote','riesgo','interdep','statusHistory'];
+
+function rowToCap(row) {
+  return {
+    id:row[0]||'', area:row[1]||'', objetivo:row[2]||'', descripcion:row[3]||'',
+    monto:Number(row[4])||0, urgencia:row[5]||'Medio',
+    necesidadFecha:row[6]||'', status:row[7]||'Pendiente',
+    approver:row[8]||'', approvalNote:row[9]||'',
+    createdAt:row[10]||''
+  };
+}
+function capToRow(c) {
+  return [c.id,c.area,c.objetivo,c.descripcion,c.monto,c.urgencia,
+    c.necesidadFecha,c.status,c.approver||'',c.approvalNote||'',c.createdAt||''];
+}
+const CAP_HEADER = ['id','area','objetivo','descripcion','monto','urgencia',
+  'necesidadFecha','status','approver','approvalNote','createdAt'];
+
+function rowToBudget(row) {
+  const obj = {};
+  for(let i=0;i<row.length;i+=2){ if(row[i]) obj[row[i]]=Number(row[i+1])||0; }
+  return obj;
+}
+function budgetToRows(b) {
+  const row = [];
+  Object.entries(b).forEach(([k,v])=>{ row.push(k); row.push(v); });
+  return [row];
+}
+
+async function loadAll() {
+  setSyncStatus('loading');
+  try {
+    // Activities
+    const actData = await sheetsRead('Actividades');
+    if (actData && actData.length > 1) {
+      activities = actData.slice(1).filter(r=>r[0]).map(rowToAct);
+    } else {
+      // First time — seed from embedded data
+      activities = SEED_DATA.map((d,i) => ({
+        id: String(i+1), area:d.area, timing:normTiming(d.timing),
+        objetivo:d.objetivo, obj_num:d.obj_num, actividad:d.actividad,
+        responsable:d.responsable, fecha_ini:d.fecha_ini, fecha_fin:d.fecha_fin,
+        originalFechaFin:d.fecha_fin, status:'No empezado',
+        statusComment:'', isDelayed:false, delayNote:'',
+        riesgo:d.riesgo, interdep:d.interdep, statusHistory:[]
+      }));
+      await saveActivities();
+    }
+
+    // Capital requests
+    const capData = await sheetsRead('Solicitudes');
+    if (capData && capData.length > 1) {
+      capitalReqs = capData.slice(1).filter(r=>r[0]).map(rowToCap);
+    } else {
+      capitalReqs = SEED_CAPITAL;
+      await saveCapital();
+    }
+
+    // Budget
+    const budgetData = await sheetsRead('Presupuesto');
+    if (budgetData && budgetData.length > 0 && budgetData[0][0]) {
+      areaCapital = rowToBudget(budgetData[0]);
+    } else {
+      await saveBudget();
+    }
+
+    setSyncStatus('ok');
+    renderAll();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('app').style.flexDirection='column';
+  } catch(e) {
+    console.error(e);
+    setSyncStatus('error');
+    // Show app anyway with seed data
+    activities = SEED_DATA.map((d,i) => ({
+      id: String(i+1), area:d.area, timing:normTiming(d.timing),
+      objetivo:d.objetivo, obj_num:d.obj_num, actividad:d.actividad,
+      responsable:d.responsable, fecha_ini:d.fecha_ini, fecha_fin:d.fecha_fin,
+      originalFechaFin:d.fecha_fin, status:'No empezado',
+      statusComment:'', isDelayed:false, delayNote:'',
+      riesgo:d.riesgo, interdep:d.interdep, statusHistory:[]
+    }));
+    capitalReqs = SEED_CAPITAL;
+    renderAll();
+    document.getElementById('loading').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('app').style.flexDirection='column';
+  }
+}
+
+async function saveActivities() {
+  const rows = [ACT_HEADER, ...activities.map(actToRow)];
+  await sheetsWrite('Actividades', rows);
+}
+async function saveCapital() {
+  const rows = [CAP_HEADER, ...capitalReqs.map(capToRow)];
+  await sheetsWrite('Solicitudes', rows);
+}
+async function saveBudget() {
+  await sheetsWrite('Presupuesto', budgetToRows(areaCapital));
+}
+
+function scheduleSave(fn) {
+  clearTimeout(syncTimer);
+  setSyncStatus('saving');
+  syncTimer = setTimeout(async () => {
+    try { await fn(); setSyncStatus('ok'); }
+    catch(e) { setSyncStatus('error'); }
+  }, 1200);
+}
+
+function setSyncStatus(st) {
+  const el = document.getElementById('sync-status');
+  if (!el) return;
+  if (st==='ok')      { el.textContent='✓ Sincronizado'; el.className='sync-indicator mono sync-ok'; }
+  else if(st==='saving'){ el.textContent='⟳ Guardando...'; el.className='sync-indicator mono'; }
+  else if(st==='loading'){el.textContent='⟳ Cargando...'; el.className='sync-indicator mono'; }
+  else                 { el.textContent='✗ Sin conexión'; el.className='sync-indicator mono sync-err'; }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function normTiming(t) {
+  if (!t) return 'Por definir';
+  t = t.trim();
+  if (t.toLowerCase().includes('previo')) return 'Previo al cierre';
+  if (/100/.test(t)) return 'Día 100';
+  if (/60/.test(t) && !/30/.test(t)) return 'Día 60';
+  if (/30/.test(t) && !/60/.test(t) && !/100/.test(t)) return 'Día 30';
+  if (/30/.test(t) && /60/.test(t)) return 'Día 30';
+  if (/3[1-9]|40/.test(t)) return 'Día 30';
+  if (t.toLowerCase().includes('definir')) return 'Por definir';
+  return t;
+}
+function isLate(a) {
+  if (a.isDelayed) return true;
+  const orig = parseDays(a.originalFechaFin);
+  const curr = parseDays(a.fecha_fin);
+  return orig!==null && curr!==null && curr > orig;
+}
+function parseDays(s) {
+  if (!s) return null;
+  s = s.trim();
+  if (s==='Cierre') return 0;
+  const m = s.match(/Cierre\s*([+-])\s*(\d+)/i);
+  if (m) return (m[1]==='+'?1:-1)*parseInt(m[2]);
+  return null;
+}
+function fmt(n){ return n ? `S/. ${(n/1000).toFixed(0)}k` : '—'; }
+function fmtFull(n){ return n ? `S/. ${n.toLocaleString('es-PE')}` : '—'; }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
+function renderAll() {
+  populateAreaFilter();
+  renderBanners();
+  renderTable();
+  renderPanorama();
+  renderCapital();
+  renderSolicitudes();
+}
+
+function populateAreaFilter() {
+  const sel = document.getElementById('filter-area');
+  sel.innerHTML = '<option value="">Todas las áreas</option>';
+  AREAS.forEach(a => { sel.innerHTML += `<option>${esc(a)}</option>`; });
+}
+
+function renderBanners() {
+  const delayed = activities.filter(isLate);
+  const blocked = activities.filter(a=>a.status==='Bloqueado');
+  const badge = document.getElementById('delay-badge');
+  if (delayed.length > 0) {
+    badge.style.display='block';
+    badge.textContent=`⚠ ${delayed.length} retrasadas`;
+  }
+  let html = '';
+  if (delayed.length>0) html+=`<div class="banner banner-warn"><span style="font-size:18px">⏰</span><div><div class="banner-title" style="color:#92400E">TEMAS CRÍTICOS — INICIAR REUNIÓN AQUÍ</div><div class="banner-sub" style="color:#B45309">${delayed.length} actividades retrasadas o con fecha modificada</div></div></div>`;
+  if (blocked.length>0) html+=`<div class="banner banner-danger"><span style="font-size:18px">🚫</span><div><div class="banner-title" style="color:#991B1B">${blocked.length} actividades bloqueadas</div><div class="banner-sub" style="color:#DC2626">Requieren atención inmediata</div></div></div>`;
+  document.getElementById('crit-banners').innerHTML = html;
+  document.getElementById('crit-banners').style.display = html ? 'flex' : 'none';
+}
+
+function getFiltered() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const area = document.getElementById('filter-area').value;
+  const timing = document.getElementById('filter-timing').value;
+  const status = document.getElementById('filter-status').value;
+  return activities.filter(a => {
+    if (area && a.area!==area) return false;
+    if (timing && a.timing!==timing) return false;
+    if (status && a.status!==status) return false;
+    if (q && !a.actividad.toLowerCase().includes(q) && !a.objetivo.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+
+function renderTable() {
+  let filtered = getFiltered();
+  // Critical first
+  const crit = filtered.filter(a=>isLate(a)||a.status==='Bloqueado'||a.status==='Retrasado');
+  const rest = filtered.filter(a=>!crit.includes(a));
+  filtered = [...crit, ...rest];
+  document.getElementById('act-count').textContent = filtered.length+' actividades';
+
+  const tbody = document.getElementById('tbl-body');
+  tbody.innerHTML = filtered.map((a,i) => {
+    const am = AREA_META[a.area]||{color:'#64748b',light:'#f1f5f9',id:'?'};
+    const sm = STATUS_META[a.status]||STATUS_META['No empezado'];
+    const late = isLate(a);
+    const crit2 = late||a.status==='Bloqueado'||a.status==='Retrasado';
+    const rowClass = crit2?'critical':late?'delayed':'';
+    const statusOpts = Object.keys(STATUS_META).map(s=>`<option value="${esc(s)}" ${a.status===s?'selected':''}>${esc(s)}</option>`).join('');
+    return `<tr class="${rowClass}" style="background:${i%2===0?'white':'#fafafa'}">
+      <td><span class="area-badge" style="background:${am.light};color:${am.color}">${am.id}</span></td>
+      <td style="color:#64748b;font-family:'DM Mono',monospace;font-size:11px">${esc(a.obj_num)}</td>
+      <td style="max-width:160px;color:#475569;font-size:11px">${esc(a.objetivo)}</td>
+      <td class="act-text">${crit2?'<span class="crit-dot">●</span>':''}${esc(a.actividad)}</td>
+      <td><span class="timing-badge">${esc(a.timing)}</span></td>
+      <td style="font-size:11px;white-space:nowrap">${esc(a.responsable)}</td>
+      <td><select class="status-select" style="background:${sm.bg};color:${sm.color}" onchange="changeStatus('${a.id}',this.value)">${statusOpts}</select></td>
+      <td class="comment-cell">${a.statusComment?`"${esc(a.statusComment.slice(0,60))}${a.statusComment.length>60?'…':''}"` : '<span style="color:#cbd5e1">—</span>'}</td>
+      <td class="date-cell">${esc(a.fecha_ini)||'—'}</td>
+      <td class="date-cell${late?' late':''}">${esc(a.fecha_fin)||'—'}${late?' ⚠':''}</td>
+      <td class="interdep">${esc(a.interdep)||'—'}</td>
+      <td class="riesgo">${a.riesgo?esc(a.riesgo):'<span style="color:#cbd5e1">—</span>'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-icon" onclick="openEditModal('${a.id}')" title="Editar">✏️</button>
+        <button class="btn-icon" onclick="deleteAct('${a.id}')" title="Eliminar" style="color:#ef4444">🗑</button>
+      </td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="13" style="padding:40px;text-align:center;color:#94a3b8">No hay actividades con estos filtros</td></tr>`;
+}
+
+function renderPanorama() {
+  const grid = document.getElementById('cards-grid');
+  grid.innerHTML = AREAS.map(area => {
+    const am = AREA_META[area];
+    const aActs = activities.filter(a=>a.area===area);
+    const done = aActs.filter(a=>a.status==='Completado').length;
+    const inProg = aActs.filter(a=>a.status==='En progreso').length;
+    const aDelayed = aActs.filter(isLate);
+    const aBlocked = aActs.filter(a=>a.status==='Bloqueado');
+    const pct = aActs.length ? Math.round((done/aActs.length)*100) : 0;
+    const recentComments = aActs.filter(a=>a.statusComment).slice(0,2);
+    const timingBars = TIMINGS_NORM.filter(t=>aActs.some(a=>a.timing===t)).map(t=>{
+      const tActs=aActs.filter(a=>a.timing===t);
+      const tDone=tActs.filter(a=>a.status==='Completado').length;
+      return `<div class="timing-row">
+        <span class="timing-lbl">${esc(t)}</span>
+        <div class="bar-track"><div class="bar-fill" style="background:${am.color};width:${tActs.length?(tDone/tActs.length)*100:0}%"></div></div>
+        <span class="timing-count">${tDone}/${tActs.length}</span>
+      </div>`;
+    }).join('');
+    const issues = [
+      ...aDelayed.slice(0,2).map(a=>`<div class="issue-item issue-delayed">⏰ <strong>${esc(a.actividad.slice(0,50))}</strong>${a.delayNote?` — ${esc(a.delayNote)}`:''}</div>`),
+      ...recentComments.map(a=>`<div class="issue-item issue-comment">💬 <em>${esc(a.statusComment.slice(0,70))}…</em></div>`)
+    ].join('');
+    return `<div class="area-card">
+      <div class="area-card-header" style="background:${am.color}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><div class="id">${am.id}</div><div class="name">${esc(area)}</div></div>
+          <div style="text-align:right"><div class="pct">${pct}%</div><div style="font-size:10px;opacity:.8">completado</div></div>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+      <div class="card-body">
+        <div class="card-stats">
+          ${[['Total',aActs.length,'#475569'],['En progreso',inProg,'#2563EB'],['Retrasadas',aDelayed.length,aDelayed.length?'#DC2626':'#94A3B8'],['Bloqueadas',aBlocked.length,aBlocked.length?'#D97706':'#94A3B8']].map(([l,v,c])=>`<div class="stat-box"><div class="stat-num" style="color:${c}">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
+        </div>
+        <div class="timing-bars">${timingBars}</div>
+        ${issues?`<div style="border-top:1px solid #f1f5f9;padding-top:10px">${issues}</div>`:''}
+        <button class="btn-detail" style="color:${am.color};border-color:${am.color}" onclick="filterByArea('${esc(area)}')">Ver detalle →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function filterByArea(area) {
+  document.getElementById('filter-area').value = area;
+  switchTab('seguimiento', document.querySelector('.tab-btn'));
+  document.querySelectorAll('.tab-btn')[0].classList.add('active');
+  renderTable();
+}
+
+function renderCapital() {
+  const totalAprobado = capitalReqs.filter(r=>r.status==='Aprobado').reduce((s,r)=>s+r.monto,0);
+  const totalLibre = BUDGET_TOTAL - totalAprobado;
+  const pct = Math.min(100,(totalAprobado/BUDGET_TOTAL)*100).toFixed(1);
+
+  document.getElementById('kpi-grid').innerHTML = [
+    {label:'Presupuesto total',val:fmtFull(BUDGET_TOTAL),sub:'Capital total para integración',color:'#0f172a',bg:'white'},
+    {label:'Capital aprobado',val:fmtFull(totalAprobado),sub:`${pct}% del presupuesto`,color:'#059669',bg:'#D1FAE5'},
+    {label:'Capital disponible',val:fmtFull(totalLibre),sub:`${(100-pct).toFixed(1)}% libre para asignar`,color:totalLibre<0?'#DC2626':'#2563EB',bg:totalLibre<0?'#FEE2E2':'#DBEAFE'},
+  ].map(k=>`<div class="kpi-card" style="background:${k.bg}"><div class="kpi-lbl">${k.label}</div><div class="kpi-val" style="color:${k.color}">${k.val}</div><div class="kpi-sub">${k.sub}</div></div>`).join('');
+
+  document.getElementById('budget-bar-section').innerHTML = `
+    <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span style="font-weight:700;font-size:14px">Ejecución presupuestal consolidada</span><span style="font-family:'DM Mono',monospace;font-size:13px;color:#2563EB">${pct}% comprometido</span></div>
+    <div class="budget-bar-track"><div class="budget-bar-fill" style="width:${pct}%"><span style="color:white;font-size:10px;font-weight:700">${fmtFull(totalAprobado)}</span></div></div>
+    <div style="display:flex;justify-content:flex-end;margin-top:6px"><span style="font-size:11px;color:#94a3b8">Disponible: ${fmtFull(totalLibre)}</span></div>`;
+
+  const listEl = document.getElementById('area-budget-list');
+  listEl.innerHTML = `<div style="padding:16px 20px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:14px">Capital asignado por área</span><button class="btn-small" style="background:#f1f5f9;color:#475569" onclick="openBudgetModal()">✏️ Editar presupuestos</button></div>`
+  + AREAS.map(area => {
+    const am = AREA_META[area];
+    const assigned = areaCapital[area]||0;
+    const approved = capitalReqs.filter(r=>r.area===area&&r.status==='Aprobado').reduce((s,r)=>s+r.monto,0);
+    const pctU = assigned ? Math.min(100,(approved/assigned)*100) : 0;
+    return `<div class="area-budget-row">
+      <div class="area-icon" style="background:${am.light};color:${am.color}">${am.id}</div>
+      <div style="width:200px"><div style="font-weight:600;font-size:13px">${esc(area)}</div></div>
+      <div style="flex:1">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="font-size:11px;color:#64748b">Asignado: <strong class="mono">${fmtFull(assigned)}</strong></span>
+          <span style="font-size:11px;color:#059669">Aprobado: <strong class="mono">${fmtFull(approved)}</strong></span>
+        </div>
+        <div style="background:#f1f5f9;border-radius:4px;height:8px"><div style="background:${am.color};height:8px;border-radius:4px;width:${pctU}%"></div></div>
+      </div>
+      <div style="width:60px;text-align:right;font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:${pctU>90?'#DC2626':am.color}">${pctU.toFixed(0)}%</div>
+    </div>`;
+  }).join('');
+}
+
+function renderSolicitudes() {
+  const guide = document.getElementById('urgency-guide');
+  guide.innerHTML = `<span style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;font-family:'DM Mono',monospace">Niveles de urgencia:</span>`
+  + Object.entries(URGENCY_META).map(([k,v])=>`<div style="display:flex;align-items:center;gap:6px"><span style="background:${v.bg};color:${v.color};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace">${k}</span><span style="font-size:11px;color:#94a3b8">${v.label}</span></div>`).join('');
+
+  const listEl = document.getElementById('solicitudes-list');
+  listEl.innerHTML = Object.keys(URGENCY_META).map(urgencia => {
+    const reqs = capitalReqs.filter(r=>r.urgencia===urgencia);
+    if (!reqs.length) return '';
+    const um = URGENCY_META[urgencia];
+    const total = reqs.reduce((s,r)=>s+r.monto,0);
+    return `<div class="urgency-section">
+      <div class="urgency-header">
+        <div class="urgency-dot" style="background:${um.color}"></div>
+        <span style="font-weight:700;font-size:14px;color:${um.color}">${urgencia}</span>
+        <span style="font-size:11px;color:#94a3b8">(${reqs.length} solicitudes · ${fmtFull(total)})</span>
+      </div>
+      ${reqs.map(req => {
+        const am = AREA_META[req.area]||{light:'#f1f5f9',color:'#475569',id:'?'};
+        const cm = CAPITAL_META[req.status]||CAPITAL_META['Pendiente'];
+        return `<div class="req-card">
+          <div class="req-body">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <span class="area-badge" style="background:${am.light};color:${am.color}">${am.id}</span>
+              <strong style="font-size:13px">${esc(req.area)}</strong>
+              <span style="font-size:11px;color:#94a3b8">· ${esc(req.objetivo)}</span>
+            </div>
+            <div style="font-size:13px;color:#475569;margin-bottom:8px">${esc(req.descripcion)}</div>
+            <div style="display:flex;gap:14px;flex-wrap:wrap">
+              <span class="mono" style="font-weight:700;font-size:11px">${fmtFull(req.monto)}</span>
+              <span style="font-size:11px;color:#64748b">📅 ${esc(req.necesidadFecha)}</span>
+              ${req.approver?`<span style="font-size:11px;color:#059669">✓ ${esc(req.approver)}</span>`:''}
+              ${req.approvalNote?`<span style="font-size:11px;color:#475569;font-style:italic">"${esc(req.approvalNote)}"</span>`:''}
+            </div>
+          </div>
+          <div class="req-actions">
+            <span class="status-badge" style="background:${cm.bg};color:${cm.color}">${esc(req.status)}</span>
+            <div style="display:flex;gap:6px">
+              <button class="btn-small" style="background:#f1f5f9;color:#475569" onclick="openCapReqModal('${req.id}')">Editar</button>
+              <button class="btn-small btn-primary" onclick="openApprovalModal('${req.id}')">Resolver</button>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
+}
+
+// ─── TABS ─────────────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+name).classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>{ if(b.textContent.toLowerCase().includes(name.slice(0,4).toLowerCase())) b.classList.add('active'); });
+  if (name==='panorama') renderPanorama();
+  if (name==='capital') renderCapital();
+  if (name==='solicitudes') renderSolicitudes();
+}
+
+// ─── ACTIONS ──────────────────────────────────────────────────────────────────
+function changeStatus(id, newStatus) {
+  const act = activities.find(a=>a.id===id);
+  if (!act || act.status===newStatus) return;
+  openStatusModal(id, newStatus, act);
+}
+
+function deleteAct(id) {
+  if (!confirm('¿Eliminar esta actividad?')) return;
+  activities = activities.filter(a=>a.id!==id);
+  scheduleSave(saveActivities);
+  renderAll();
+}
+
+// ─── MODALS ───────────────────────────────────────────────────────────────────
+function openModal(title, html) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').innerHTML = html;
+  document.getElementById('modal-overlay').style.display='flex';
+}
+function closeModal() {
+  document.getElementById('modal-overlay').style.display='none';
+  document.getElementById('modal-body').innerHTML='';
+}
+
+function openEditModal(id) {
+  const a = activities.find(x=>x.id===id);
+  if (!a) return;
+  const areaOpts = AREAS.map(ar=>`<option value="${esc(ar)}" ${a.area===ar?'selected':''}>${esc(ar)}</option>`).join('');
+  const timingOpts = TIMINGS_NORM.map(t=>`<option value="${esc(t)}" ${a.timing===t?'selected':''}>${esc(t)}</option>`).join('');
+  const dateChanged = a.fecha_fin !== a.originalFechaFin && a.originalFechaFin;
+  openModal('Editar actividad', `
+    <div class="form-grid">
+      <div class="full"><div class="field"><label>Área</label><select id="e-area">${areaOpts}</select></div></div>
+      <div class="field"><label>Objetivo *</label><input id="e-obj" value="${esc(a.objetivo)}"/></div>
+      <div class="field"><label>N° Objetivo</label><input id="e-objnum" value="${esc(a.obj_num)}"/></div>
+      <div class="full"><div class="field"><label>Actividad *</label><textarea id="e-act" rows="2">${esc(a.actividad)}</textarea></div></div>
+      <div class="field"><label>Timing</label><select id="e-timing">${timingOpts}</select></div>
+      <div class="field"><label>Responsable</label><input id="e-resp" value="${esc(a.responsable)}"/></div>
+      <div class="field"><label>Fecha inicio</label><input id="e-fini" value="${esc(a.fecha_ini)}" placeholder="ej: Cierre +15d"/></div>
+      <div class="field"><label>Fecha fin</label><input id="e-ffin" value="${esc(a.fecha_fin)}" placeholder="ej: Cierre +30d"/></div>
+      ${dateChanged?`<div class="full"><div class="field"><label>Motivo cambio de fecha</label><input id="e-delay" value="${esc(a.delayNote)}" placeholder="¿Por qué se modificó la fecha?"/></div></div>`:''}
+      <div class="full"><div class="field"><label>Interdependencias</label><input id="e-interdep" value="${esc(a.interdep)}"/></div></div>
+      <div class="full"><div class="field"><label>Riesgo principal</label><input id="e-riesgo" value="${esc(a.riesgo)}"/></div></div>
+      <div class="full"><div class="field"><label>Comentario de status</label><textarea id="e-comment" rows="2">${esc(a.statusComment)}</textarea></div></div>
+    </div>
+    ${a.statusHistory&&a.statusHistory.length?`<div style="margin-top:8px;border-top:1px solid #f1f5f9;padding-top:12px"><div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:6px;text-transform:uppercase">Historial</div>${a.statusHistory.map(h=>`<div class="history-item"><strong>${esc(h.date||'')}</strong> · ${esc(h.status||'')}${h.comment?` — "${esc(h.comment)}"`:''}</div>`).join('')}</div>`:''}
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveEdit('${id}')">Guardar cambios</button>
+    </div>`);
+}
+
+function saveEdit(id) {
+  const a = activities.find(x=>x.id===id);
+  if (!a) return;
+  const newFin = document.getElementById('e-ffin').value.trim();
+  const orig = a.originalFechaFin;
+  const origDays = parseDays(orig), newDays = parseDays(newFin);
+  const nowLate = orig && newFin && origDays!==null && newDays!==null && newDays > origDays;
+  Object.assign(a, {
+    area: document.getElementById('e-area').value,
+    objetivo: document.getElementById('e-obj').value.trim(),
+    obj_num: document.getElementById('e-objnum').value.trim(),
+    actividad: document.getElementById('e-act').value.trim(),
+    timing: document.getElementById('e-timing').value,
+    responsable: document.getElementById('e-resp').value.trim(),
+    fecha_ini: document.getElementById('e-fini').value.trim(),
+    fecha_fin: newFin,
+    interdep: document.getElementById('e-interdep').value.trim(),
+    riesgo: document.getElementById('e-riesgo').value.trim(),
+    statusComment: document.getElementById('e-comment').value.trim(),
+    isDelayed: nowLate || a.isDelayed,
+    delayNote: document.getElementById('e-delay') ? document.getElementById('e-delay').value.trim() : a.delayNote,
+  });
+  closeModal();
+  scheduleSave(saveActivities);
+  renderAll();
+}
+
+function openStatusModal(id, newStatus, act) {
+  const sm = STATUS_META[newStatus]||STATUS_META['No empezado'];
+  const isDelayed = newStatus==='Retrasado';
+  openModal('Actualizar status', `
+    <div style="margin-bottom:14px">
+      <div style="font-size:13px;color:#475569;margin-bottom:10px">${esc(act.actividad)}</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+        <span style="background:${(STATUS_META[act.status]||STATUS_META['No empezado']).bg};color:${(STATUS_META[act.status]||STATUS_META['No empezado']).color};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace">${esc(act.status)}</span>
+        <span style="color:#94a3b8">→</span>
+        <span style="background:${sm.bg};color:${sm.color};font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'DM Mono',monospace">${esc(newStatus)}</span>
+      </div>
+      ${isDelayed?`<div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:#92400E">⚠ Marcar como retrasado registrará este cambio en el historial y aparecerá en el reporte quincenal</div>`:''}
+    </div>
+    <div class="field"><label>Comentario de status</label><textarea id="s-comment" rows="2" placeholder="Describe el avance, bloqueo o situación actual...">${esc(act.statusComment)}</textarea></div>
+    ${isDelayed?`<div class="field"><label>Motivo del retraso</label><input id="s-delay" placeholder="¿Por qué se está retrasando?"/></div>`:''}
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal();renderTable()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmStatus('${id}','${esc(newStatus)}')">Confirmar</button>
+    </div>`);
+}
+
+function confirmStatus(id, newStatus) {
+  const a = activities.find(x=>x.id===id);
+  if (!a) return;
+  const comment = document.getElementById('s-comment').value.trim();
+  const delayEl = document.getElementById('s-delay');
+  const delayNote = delayEl ? delayEl.value.trim() : '';
+  const entry = {status:a.status, comment:a.statusComment, date:new Date().toLocaleDateString('es-PE')};
+  a.statusHistory = [entry, ...(a.statusHistory||[])].slice(0,10);
+  a.status = newStatus;
+  a.statusComment = comment;
+  if (delayNote) { a.isDelayed=true; a.delayNote=delayNote; }
+  closeModal();
+  scheduleSave(saveActivities);
+  renderAll();
+}
+
+function openAddModal() {
+  const areaOpts = AREAS.map(ar=>`<option value="${esc(ar)}">${esc(ar)}</option>`).join('');
+  const timingOpts = TIMINGS_NORM.map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join('');
+  openModal('Agregar nueva actividad', `
+    <div class="form-grid">
+      <div class="full"><div class="field"><label>Área *</label><select id="n-area">${areaOpts}</select></div></div>
+      <div class="field"><label>Objetivo *</label><input id="n-obj" placeholder="Nombre del objetivo..."/></div>
+      <div class="field"><label>N° Objetivo</label><input id="n-objnum" placeholder="ej: 1, 2A..."/></div>
+      <div class="full"><div class="field"><label>Actividad *</label><textarea id="n-act" rows="2" placeholder="Descripción de la actividad..."></textarea></div></div>
+      <div class="field"><label>Timing *</label><select id="n-timing">${timingOpts}</select></div>
+      <div class="field"><label>Responsable</label><input id="n-resp"/></div>
+      <div class="field"><label>Fecha inicio</label><input id="n-fini" placeholder="ej: Cierre +15d"/></div>
+      <div class="field"><label>Fecha fin</label><input id="n-ffin" placeholder="ej: Cierre +30d"/></div>
+      <div class="full"><div class="field"><label>Interdependencias</label><input id="n-interdep" placeholder="ej: GDH, Legal, Operaciones"/></div></div>
+      <div class="full"><div class="field"><label>Riesgo principal</label><input id="n-riesgo"/></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmAdd()">Agregar actividad</button>
+    </div>`);
+}
+
+function confirmAdd() {
+  const obj = document.getElementById('n-obj').value.trim();
+  const act = document.getElementById('n-act').value.trim();
+  if (!obj||!act) { alert('Completa los campos requeridos (Objetivo y Actividad)'); return; }
+  const ffin = document.getElementById('n-ffin').value.trim();
+  activities.push({
+    id:uid(), area:document.getElementById('n-area').value,
+    timing:document.getElementById('n-timing').value, objetivo:obj,
+    obj_num:document.getElementById('n-objnum').value.trim(), actividad:act,
+    responsable:document.getElementById('n-resp').value.trim(),
+    fecha_ini:document.getElementById('n-fini').value.trim(), fecha_fin:ffin,
+    originalFechaFin:ffin, status:'No empezado', statusComment:'',
+    isDelayed:false, delayNote:'',
+    riesgo:document.getElementById('n-riesgo').value.trim(),
+    interdep:document.getElementById('n-interdep').value.trim(),
+    statusHistory:[]
+  });
+  closeModal();
+  scheduleSave(saveActivities);
+  renderAll();
+}
+
+function openBiweekly() {
+  const twoWeeksAgo = new Date(); twoWeeksAgo.setDate(twoWeeksAgo.getDate()-14);
+  const issues = activities.filter(a => isLate(a)||a.status==='Bloqueado'||a.status==='Retrasado'||a.statusComment);
+  const byArea = {};
+  AREAS.forEach(ar => byArea[ar] = issues.filter(a=>a.area===ar));
+  const html = `
+    <div style="background:#FEF3C7;border:1px solid #F59E0B;border-radius:8px;padding:12px 16px;margin-bottom:16px">
+      <div style="font-weight:700;font-size:13px;color:#92400E">🗓 Período: últimas 2 semanas</div>
+      <div style="font-size:12px;color:#B45309;margin-top:3px">${issues.length} temas · ${activities.filter(isLate).length} retrasados · ${activities.filter(a=>a.status==='Bloqueado').length} bloqueados</div>
+    </div>
+    ${AREAS.map(area=>{
+      const aActs=byArea[area];
+      if(!aActs.length)return'';
+      const am=AREA_META[area];
+      return `<div style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:6px;height:6px;border-radius:50%;background:${am.color}"></div>
+          <span style="font-weight:700;font-size:13px;color:${am.color}">${esc(area)}</span>
+          <span style="font-size:11px;color:#94a3b8">(${aActs.length})</span>
+        </div>
+        ${aActs.map(a=>{
+          const late=isLate(a),blocked=a.status==='Bloqueado';
+          return`<div class="biweekly-item" style="border-color:${late?'#FDE68A':blocked?'#FCA5A5':'#e2e8f0'};background:${late?'#FFFBEB':blocked?'#FEF2F2':'#f8fafc'}">
+            <div style="display:flex;gap:8px">
+              <span>${late?'⏰':blocked?'🚫':'💬'}</span>
+              <div style="flex:1">
+                <div style="font-weight:600;font-size:12px">${esc(a.actividad)}</div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px">Obj: ${esc(a.objetivo)} · ${esc(a.timing)} · ${esc(a.responsable)}</div>
+                ${a.statusComment?`<div style="font-size:11px;color:#475569;margin-top:4px;font-style:italic">"${esc(a.statusComment)}"</div>`:''}
+                ${a.delayNote?`<div style="font-size:11px;color:#DC2626;margin-top:3px">⚠ Retraso: ${esc(a.delayNote)}</div>`:''}
+                ${late&&a.originalFechaFin&&a.fecha_fin&&a.originalFechaFin!==a.fecha_fin?`<div style="font-size:11px;color:#D97706;margin-top:3px">Fecha original: <strong>${esc(a.originalFechaFin)}</strong> → Nueva: <strong>${esc(a.fecha_fin)}</strong></div>`:''}
+                ${a.interdep?`<div style="font-size:11px;color:#7c3aed;margin-top:3px">🔗 ${esc(a.interdep)}</div>`:''}
+              </div>
+              <span style="background:${(STATUS_META[a.status]||STATUS_META['No empezado']).bg};color:${(STATUS_META[a.status]||STATUS_META['No empezado']).color};font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'DM Mono',monospace;white-space:nowrap">${esc(a.status)}</span>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }).join('')}
+    ${!issues.length?'<div style="text-align:center;padding:40px;color:#94a3b8">✅ No hay temas críticos</div>':''}
+    <div class="modal-footer"><button class="btn-primary" onclick="closeModal()">Cerrar</button></div>`;
+  openModal('📋 Reporte Quincenal — Temas Críticos', html);
+}
+
+function openCapReqModal(id) {
+  const req = id ? capitalReqs.find(r=>r.id===id) : null;
+  const areaOpts = AREAS.map(ar=>`<option value="${esc(ar)}" ${req&&req.area===ar?'selected':''}>${esc(ar)}</option>`).join('');
+  const urgOpts = Object.keys(URGENCY_META).map(u=>`<option value="${esc(u)}" ${req&&req.urgencia===u?'selected':''}>${esc(u)} (${URGENCY_META[u].label})</option>`).join('');
+  const capOpts = Object.keys(CAPITAL_META).map(s=>`<option value="${esc(s)}" ${req&&req.status===s?'selected':''}>${esc(s)}</option>`).join('');
+  openModal(req?'Editar solicitud':'Nueva solicitud de capital', `
+    <div class="form-grid">
+      <div class="full"><div class="field"><label>Área *</label><select id="c-area">${areaOpts}</select></div></div>
+      <div class="full"><div class="field"><label>Objetivo al que se alinea *</label><input id="c-obj" value="${esc(req?.objetivo||'')}" placeholder="¿A qué objetivo del plan responde?"/></div></div>
+      <div class="full"><div class="field"><label>Descripción *</label><textarea id="c-desc" rows="2">${esc(req?.descripcion||'')}</textarea></div></div>
+      <div class="field"><label>Monto (S/.) *</label><input id="c-monto" type="number" value="${req?.monto||''}"/></div>
+      <div class="field"><label>Urgencia *</label><select id="c-urgencia">${urgOpts}</select></div>
+      <div class="field"><label>Fecha de necesidad</label><input id="c-fecha" value="${esc(req?.necesidadFecha||'')}" placeholder="ej: Cierre +15d"/></div>
+      <div class="field"><label>Status</label><select id="c-status">${capOpts}</select></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmCapReq('${id||''}')">${req?'Guardar':'Enviar solicitud'}</button>
+    </div>`);
+}
+
+function confirmCapReq(id) {
+  const obj=document.getElementById('c-obj').value.trim();
+  const desc=document.getElementById('c-desc').value.trim();
+  const monto=Number(document.getElementById('c-monto').value);
+  if(!obj||!desc||!monto){alert('Completa los campos requeridos');return;}
+  const data={area:document.getElementById('c-area').value,objetivo:obj,descripcion:desc,monto,urgencia:document.getElementById('c-urgencia').value,necesidadFecha:document.getElementById('c-fecha').value.trim(),status:document.getElementById('c-status').value};
+  if(id){
+    const r=capitalReqs.find(x=>x.id===id);
+    if(r) Object.assign(r,data);
+  } else {
+    capitalReqs.push({...data,id:uid(),createdAt:new Date().toISOString(),approver:'',approvalNote:''});
+  }
+  closeModal();
+  scheduleSave(saveCapital);
+  renderSolicitudes();
+  renderCapital();
+}
+
+function openApprovalModal(id) {
+  const req=capitalReqs.find(r=>r.id===id);
+  if(!req)return;
+  const capOpts=Object.keys(CAPITAL_META).map(s=>`<option value="${esc(s)}" ${req.status===s?'selected':''}>${esc(s)}</option>`).join('');
+  openModal('Resolver solicitud de capital',`
+    <div style="background:#f8fafc;border-radius:8px;padding:12px 14px;margin-bottom:14px">
+      <div style="font-weight:600;font-size:13px">${esc(req.descripcion)}</div>
+      <div style="font-size:12px;color:#64748b;margin-top:4px">${esc(req.area)} · ${esc(req.objetivo)} · <strong class="mono">${fmtFull(req.monto)}</strong></div>
+    </div>
+    <div class="field"><label>Decisión</label><select id="a-status">${capOpts}</select></div>
+    <div class="field"><label>Aprobado por</label><input id="a-approver" value="${esc(req.approver||'')}" placeholder="Nombre del aprobador..."/></div>
+    <div class="field"><label>Nota</label><textarea id="a-note" rows="2">${esc(req.approvalNote||'')}</textarea></div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" id="a-btn" onclick="confirmApproval('${id}')">Guardar</button>
+    </div>`);
+  document.getElementById('a-status').addEventListener('change',function(){
+    const btn=document.getElementById('a-btn');
+    btn.textContent=this.value==='Aprobado'?'✓ Aprobar':this.value==='Rechazado'?'✗ Rechazar':'Guardar';
+    btn.className='btn-primary'+(this.value==='Aprobado'?' btn-success':this.value==='Rechazado'?' btn-danger':'');
+  });
+}
+
+function confirmApproval(id) {
+  const req=capitalReqs.find(r=>r.id===id);
+  if(!req)return;
+  req.status=document.getElementById('a-status').value;
+  req.approver=document.getElementById('a-approver').value.trim();
+  req.approvalNote=document.getElementById('a-note').value.trim();
+  closeModal();
+  scheduleSave(saveCapital);
+  renderSolicitudes();
+  renderCapital();
+}
+
+function openBudgetModal() {
+  const fields=AREAS.map(a=>`<div class="field"><label>${esc(a)}</label><input id="b-${esc(a.replace(/\s/g,'_'))}" type="number" value="${areaCapital[a]||0}"/></div>`).join('');
+  openModal('Editar presupuesto por área',`${fields}
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmBudget()">Guardar</button>
+    </div>`);
+}
+
+function confirmBudget() {
+  AREAS.forEach(a=>{
+    const el=document.getElementById('b-'+a.replace(/\s/g,'_'));
+    if(el) areaCapital[a]=Number(el.value)||0;
+  });
+  closeModal();
+  scheduleSave(saveBudget);
+  renderCapital();
+}
+
+// ─── SEED DATA ────────────────────────────────────────────────────────────────
+const SEED_DATA = [{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Definir alcance","obj_num":"1","actividad":"Definir alcance auditoría y necesidades con equipo","responsable":"Luis Ortega","fecha_ini":"Cierre -21d","fecha_fin":"","riesgo":"Contingencias","interdep":"Contabilidad, auditores"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Determinar equipo humano","obj_num":"1","actividad":"Determinar equipo humano Aviva involucrado","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre -15d","riesgo":"Contingencias","interdep":"Contabilidad"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Priorizar revisión","obj_num":"1","actividad":"Cronograma y priorización de cuentas a revisar","responsable":"Luis Ortega","fecha_ini":"Cierre","fecha_fin":"","riesgo":"","interdep":""},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Control Tesorería y Contabilidad","obj_num":"2","actividad":"Inventario de cuentas y cambios de firmas","responsable":"Luis Ortega","fecha_ini":"Cierre","fecha_fin":"","riesgo":"Realidad financiera","interdep":"Tesorería, Contabilidad"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Control Tesorería y Contabilidad","obj_num":"2","actividad":"Conciliación bancaria","responsable":"Luis Ortega","fecha_ini":"Cierre","fecha_fin":"Cierre +7d","riesgo":"","interdep":"Tesorería"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Renegociación deuda financiera","obj_num":"3","actividad":"Inventario de pasivos financieros y condiciones","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre +7d","riesgo":"Costo financiero","interdep":"Planificación Financiera"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Renegociación deuda financiera","obj_num":"3","actividad":"Negociar pago anticipado","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre +30d","riesgo":"","interdep":"Planificación Financiera"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Acuerdos con proveedores","obj_num":"4","actividad":"Levantamiento base de datos proveedores","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre +15d","riesgo":"Demandas proveedores","interdep":"Farmacia, Logística"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Ordenar CxP","obj_num":"5","actividad":"Levantamiento y priorización de CxP","responsable":"Débora","fecha_ini":"","fecha_fin":"Cierre +21d","riesgo":"Desalineación contable","interdep":"Contabilidad, Auditores"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Mapear Farmacia y Logística","obj_num":"6","actividad":"Levantamiento de proceso en sede","responsable":"Débora","fecha_ini":"","fecha_fin":"Cierre +30d","riesgo":"Desorden operativo","interdep":"Farmacia, Logística"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Coordinación presupuestal","obj_num":"7","actividad":"Comunicar presupuesto preliminar por área","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre","riesgo":"","interdep":"Todas las Gerencias"},{"area":"Adm y Finanzas","timing":"Día 30","objetivo":"Coordinación presupuestal","obj_num":"7","actividad":"Reuniones semanales de validación de necesidades","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"","riesgo":"","interdep":"Todas las Gerencias"},{"area":"Adm y Finanzas","timing":"Día 60","objetivo":"Cobranza dudosa","obj_num":"11","actividad":"Levantamiento de cartera por antigüedad","responsable":"Débora","fecha_ini":"Cierre","fecha_fin":"","riesgo":"Impacto flujo de caja","interdep":"Cobranzas"},{"area":"Adm y Finanzas","timing":"Día 60","objetivo":"Sincerar CxP proveedores","obj_num":"12","actividad":"Generar información actualizada al corte","responsable":"Débora","fecha_ini":"","fecha_fin":"Cierre +45d","riesgo":"Paralización servicios","interdep":"Logística, Contabilidad"},{"area":"Adm y Finanzas","timing":"Día 60","objetivo":"Estructura RRHH y Costo","obj_num":"13","actividad":"Levantamiento organigrama y modo de operación","responsable":"Luis Ortega","fecha_ini":"Cierre +40d","fecha_fin":"Cierre +60d","riesgo":"Costos de operación","interdep":"GDH"},{"area":"Adm y Finanzas","timing":"Día 100","objetivo":"Test de beneficio tributario","obj_num":"14","actividad":"Determinar candidatos para proceso","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre -30d","riesgo":"Costo tributario","interdep":"Contabilidad"},{"area":"Adm y Finanzas","timing":"Día 100","objetivo":"Implementación software contable","obj_num":"15","actividad":"Levantamiento del sistema actual","responsable":"Luis Ortega","fecha_ini":"Cierre","fecha_fin":"","riesgo":"Confiabilidad info","interdep":"TI"},{"area":"Adm y Finanzas","timing":"Día 100","objetivo":"Inventario de activos","obj_num":"16","actividad":"Ejecución inventario e impacto económico","responsable":"Luis Ortega","fecha_ini":"","fecha_fin":"Cierre +100d","riesgo":"Realidad financiera","interdep":"Contabilidad, Operaciones"},{"area":"Operaciones","timing":"Día 30","objetivo":"Inventario equipamiento médico","obj_num":"1","actividad":"Inventario equipos áreas críticas","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Inoperatividad equipos","interdep":"Infraestructura + DM"},{"area":"Operaciones","timing":"Día 30","objetivo":"Inventario equipamiento médico","obj_num":"1","actividad":"Evaluación estado del parque de equipos","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Antigüedad mayor a la esperada","interdep":""},{"area":"Operaciones","timing":"Día 30","objetivo":"Gestión proveedores críticos","obj_num":"2","actividad":"Identificación proveedores críticos e inventario","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Desabastecimiento","interdep":"Farmacia + Adm y Finanzas"},{"area":"Operaciones","timing":"Día 30","objetivo":"Diagnóstico operativo","obj_num":"3","actividad":"Visita operativa y mapeo de flujos","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Interrupción operativa","interdep":"DM"},{"area":"Operaciones","timing":"Día 30","objetivo":"Procesos críticos UCI y Emergencias","obj_num":"4","actividad":"Revisión protocolos clínicos y operativos","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Riesgo clínico","interdep":"DM"},{"area":"Operaciones","timing":"Día 30","objetivo":"Facturación y cobranza operativa","obj_num":"5","actividad":"Diagnóstico admisión y facturación","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Pérdida ingresos","interdep":"Adm y Finanzas"},{"area":"Operaciones","timing":"Día 30","objetivo":"Gestión talento operativo","obj_num":"6","actividad":"Identificar personal clave operaciones","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Fuga de talento","interdep":"GDH"},{"area":"Operaciones","timing":"Día 30","objetivo":"Mantenimiento preventivo crítico","obj_num":"7","actividad":"Identificar equipos sin mantenimiento reciente","responsable":"Carlos Grillo","fecha_ini":"","fecha_fin":"","riesgo":"Fallo equipos","interdep":"Infraestructura"},{"area":"Operaciones","timing":"Día 60","objetivo":"Optimización procesos","obj_num":"10","actividad":"Rediseño flujos admisión y alta","responsable":"Carlos Grillo","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Resistencia al cambio","interdep":"DM, Comercial"},{"area":"Operaciones","timing":"Día 100","objetivo":"Modelo operativo consolidado","obj_num":"13","actividad":"Manual de operaciones de la clínica","responsable":"Carlos Grillo","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Falta estandarización","interdep":"GDH"},{"area":"Legal y Regulatorio","timing":"Día 30","objetivo":"Procesos judiciales y fiscales","obj_num":"1","actividad":"Entrevista asesores legales IVC","responsable":"Hernán Icochea","fecha_ini":"Cierre","fecha_fin":"","riesgo":"Sentencias desfavorables","interdep":"DM + GDH"},{"area":"Legal y Regulatorio","timing":"Día 30","objetivo":"Revisión contratos vigentes","obj_num":"2","actividad":"Contratos críticos: médicos, proveedores, aseguradoras","responsable":"Hernán Icochea","fecha_ini":"Cierre","fecha_fin":"Cierre +30d","riesgo":"Incumplimientos contractuales","interdep":"Adm y Fin, GDH, DM"},{"area":"Legal y Regulatorio","timing":"Día 30","objetivo":"Cumplimiento regulatorio sanitario","obj_num":"3","actividad":"Habilitaciones y licencias SUSALUD/MINSA","responsable":"Hernán Icochea","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"Suspensión operativa","interdep":"DM, Operaciones"},{"area":"Legal y Regulatorio","timing":"Día 30","objetivo":"Cumplimiento laboral","obj_num":"5","actividad":"Revisión planillas y contratos laborales","responsable":"Hernán Icochea","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"Demandas laborales","interdep":"GDH"},{"area":"Legal y Regulatorio","timing":"Día 60","objetivo":"Renegociación contratos","obj_num":"6","actividad":"Renegociación contratos médicos y proveedores","responsable":"Hernán Icochea","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Ruptura de relaciones","interdep":"DM, Adm y Fin"},{"area":"Legal y Regulatorio","timing":"Día 100","objetivo":"Consolidación regulatoria","obj_num":"8","actividad":"Renovación y actualización habilitaciones","responsable":"Hernán Icochea","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Riesgo regulatorio","interdep":"DM, Operaciones"},{"area":"Comercial y Marketing","timing":"Día 30","objetivo":"Diagnóstico comercial","obj_num":"1","actividad":"Levantamiento data de ventas 24 meses","responsable":"Natalie Toledo","fecha_ini":"","fecha_fin":"","riesgo":"Datos incompletos","interdep":"Finanzas, Operaciones, DM"},{"area":"Comercial y Marketing","timing":"Día 30","objetivo":"Red médica actual","obj_num":"2","actividad":"Data médicos activos y productividad","responsable":"Natalie Toledo","fecha_ini":"","fecha_fin":"Cierre","riesgo":"Fuga de médicos","interdep":"DM"},{"area":"Comercial y Marketing","timing":"Día 30","objetivo":"Análisis tarifario","obj_num":"3","actividad":"Benchmarking tarifas vs competencia","responsable":"Natalie Toledo","fecha_ini":"","fecha_fin":"Cierre -30d","riesgo":"Precios no competitivos","interdep":""},{"area":"Comercial y Marketing","timing":"Día 30","objetivo":"Comunicación día 1","obj_num":"4","actividad":"Mensaje bienvenida a colaboradores","responsable":"Natalie Toledo","fecha_ini":"","fecha_fin":"Cierre","riesgo":"Incertidumbre interna","interdep":"GDH"},{"area":"Comercial y Marketing","timing":"Día 30","objetivo":"Canales de captación","obj_num":"5","actividad":"Revisión canales captación actuales","responsable":"Natalie Toledo","fecha_ini":"","fecha_fin":"Cierre +30d","riesgo":"Caída de demanda","interdep":"Operaciones"},{"area":"Comercial y Marketing","timing":"Día 60","objetivo":"Rediseño oferta comercial","obj_num":"6","actividad":"Diseño paquetes y productos diferenciados","responsable":"Natalie Toledo","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Baja diferenciación","interdep":"DM, Operaciones"},{"area":"Comercial y Marketing","timing":"Día 60","objetivo":"Relación aseguradoras y EPS","obj_num":"7","actividad":"Renegociación tarifas aseguradoras clave","responsable":"Natalie Toledo","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Pérdida contratos","interdep":"Adm y Fin, Legal"},{"area":"Comercial y Marketing","timing":"Día 60","objetivo":"Relanzamiento de marca","obj_num":"8","actividad":"Estrategia de marca bajo Aviva","responsable":"Natalie Toledo","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Confusión de marca","interdep":""},{"area":"Comercial y Marketing","timing":"Día 100","objetivo":"Consolidación comercial","obj_num":"11","actividad":"Revisión y ajuste plan comercial con resultados","responsable":"Natalie Toledo","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Desaceleración","interdep":"Adm y Finanzas"},{"area":"GDH","timing":"Día 30","objetivo":"Saneamiento obligaciones laborales","obj_num":"1","actividad":"Pago beneficios sociales pendientes","responsable":"Eycer Vergaray","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"Embargo de cuentas","interdep":"Finanzas"},{"area":"GDH","timing":"Día 30","objetivo":"Saneamiento obligaciones laborales","obj_num":"1","actividad":"Regularización aportes AFP/ESSalud","responsable":"Eycer Vergaray","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"","interdep":"Finanzas"},{"area":"GDH","timing":"Día 30","objetivo":"Retención personal clave","obj_num":"2","actividad":"Identificación y entrevistas de retención","responsable":"Claudia Planas","fecha_ini":"Cierre +15d","fecha_fin":"Cierre +30d","riesgo":"Fuga de talento","interdep":""},{"area":"GDH","timing":"Día 30","objetivo":"Diagnóstico estructura organizacional","obj_num":"3","actividad":"Levantamiento organigrama actual","responsable":"Claudia Planas","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"Duplicidad de roles","interdep":"Todas las áreas"},{"area":"GDH","timing":"Día 60","objetivo":"Nuevos contratos laborales","obj_num":"4","actividad":"Migración contratos a modalidad Aviva","responsable":"Claudia Planas","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Conflictos laborales","interdep":"Legal"},{"area":"GDH","timing":"Día 60","objetivo":"Plan capacitación e inducción","obj_num":"5","actividad":"Programa inducción cultura Aviva","responsable":"Claudia Planas","fecha_ini":"Cierre +15d","fecha_fin":"Cierre +45d","riesgo":"Resistencia cultural","interdep":""},{"area":"GDH","timing":"Día 100","objetivo":"Estructura organizacional consolidada","obj_num":"7","actividad":"Organigrama definitivo implementado","responsable":"Claudia Planas","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Inestabilidad","interdep":""},{"area":"GDH","timing":"Día 100","objetivo":"Implementación nómina Aviva","obj_num":"9","actividad":"Migración al sistema de nómina Aviva","responsable":"Claudia Planas","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Errores en pagos","interdep":"Adm y Finanzas, TI"},{"area":"Dirección Médica","timing":"Día 30","objetivo":"Temas críticos clínicos","obj_num":"1","actividad":"Identificación temas críticos SOP/UCI","responsable":"Paula Ponce","fecha_ini":"Cierre","fecha_fin":"Cierre +7d","riesgo":"","interdep":"Operaciones"},{"area":"Dirección Médica","timing":"Día 30","objetivo":"Relacionamiento médico","obj_num":"2","actividad":"Revisión honorarios médicos","responsable":"Maritza Torres","fecha_ini":"Cierre","fecha_fin":"Cierre +30d","riesgo":"Contratos desactualizados","interdep":"GDH, Finanzas"},{"area":"Dirección Médica","timing":"Día 30","objetivo":"Acreditaciones y calidad","obj_num":"4","actividad":"Levantamiento certificaciones vigentes","responsable":"Paula Ponce","fecha_ini":"Cierre","fecha_fin":"Cierre +30d","riesgo":"Incumplimiento SUSALUD","interdep":"Legal, Operaciones"},{"area":"Dirección Médica","timing":"Día 60","objetivo":"Plan relacionamiento médico","obj_num":"3","actividad":"Propuesta modelo honorarios","responsable":"Maritza Torres","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +45d","riesgo":"Fuga de médicos","interdep":"GDH, Finanzas, Legal"},{"area":"Dirección Médica","timing":"Día 60","objetivo":"Protocolos clínicos","obj_num":"5","actividad":"Implementación protocolos Aviva","responsable":"Paula Ponce","fecha_ini":"Cierre +45d","fecha_fin":"Cierre +60d","riesgo":"Variabilidad clínica","interdep":"Operaciones, GDH"},{"area":"Dirección Médica","timing":"Día 100","objetivo":"Modelo calidad asistencial","obj_num":"7","actividad":"Sistema gestión de calidad implementado","responsable":"Paula Ponce","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +100d","riesgo":"Variabilidad clínica","interdep":"Operaciones"},{"area":"Infraestructura","timing":"Día 30","objetivo":"Diagnóstico infraestructura","obj_num":"1","actividad":"Visita técnica completa","responsable":"Rafael Rios","fecha_ini":"Cierre","fecha_fin":"Cierre +7d","riesgo":"Problemas no advertidos en DD","interdep":"Operaciones"},{"area":"Infraestructura","timing":"Día 30","objetivo":"Diagnóstico infraestructura","obj_num":"1","actividad":"Revisión de antecedentes legales","responsable":"Rafael Rios","fecha_ini":"","fecha_fin":"","riesgo":"Falta información","interdep":"Legal"},{"area":"Infraestructura","timing":"Día 60","objetivo":"Etapa 1 baja complejidad","obj_num":"2","actividad":"Diseño y especificaciones técnicas","responsable":"Rafael Rios","fecha_ini":"Cierre +15d","fecha_fin":"Cierre +30d","riesgo":"Desfase de costos","interdep":"Operaciones, DM"},{"area":"Infraestructura","timing":"Día 60","objetivo":"Etapa 1 baja complejidad","obj_num":"2","actividad":"Licitación y contratación","responsable":"Rafael Rios","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +45d","riesgo":"","interdep":"Adm y Fin, Legal"},{"area":"Infraestructura","timing":"Día 60","objetivo":"Habilitación espacios prioritarios","obj_num":"3","actividad":"Ejecución habilitaciones urgentes","responsable":"Rafael Rios","fecha_ini":"Cierre +30d","fecha_fin":"Cierre +60d","riesgo":"Impacto en operación","interdep":"Operaciones"},{"area":"Infraestructura","timing":"Día 60","objetivo":"Sistema eléctrico","obj_num":"4","actividad":"Revisión sistema eléctrico y grupos electrógenos","responsable":"Rafael Rios","fecha_ini":"Cierre","fecha_fin":"Cierre +15d","riesgo":"Corte de energía","interdep":"Operaciones"},{"area":"Infraestructura","timing":"Día 100","objetivo":"Etapa 2 adecuación moderada","obj_num":"6","actividad":"Diseño arquitectónico y estructural","responsable":"Rafael Rios","fecha_ini":"Cierre +60d","fecha_fin":"Cierre +80d","riesgo":"Retrasos por quejas","interdep":"Operaciones, DM"}];
+
+const SEED_CAPITAL = [
+  {id:'c1',area:'Adm y Finanzas',objetivo:'Renegociación deuda financiera',descripcion:'Honorarios asesores financieros y bancarios',monto:500000,urgencia:'Alto',necesidadFecha:'Cierre +15d',status:'En revisión',approver:'',approvalNote:'',createdAt:new Date().toISOString()},
+  {id:'c2',area:'Operaciones',objetivo:'Inventario equipamiento médico',descripcion:'Adquisición y reposición equipos médicos UCI/Emergencias',monto:2200000,urgencia:'Crítico',necesidadFecha:'Cierre',status:'Aprobado',approver:'Luis O.',approvalNote:'Prioridad día 1',createdAt:new Date().toISOString()},
+  {id:'c3',area:'Infraestructura',objetivo:'Etapa 1 baja complejidad',descripcion:'Intervenciones urgentes de infraestructura y habilitación',monto:800000,urgencia:'Alto',necesidadFecha:'Cierre +30d',status:'Aprobado',approver:'Luis O.',approvalNote:'',createdAt:new Date().toISOString()},
+  {id:'c4',area:'GDH',objetivo:'Saneamiento obligaciones laborales',descripcion:'Pago beneficios sociales, AFP/ESSalud y liquidaciones pendientes',monto:1500000,urgencia:'Crítico',necesidadFecha:'Cierre',status:'Aprobado',approver:'Luis O.',approvalNote:'Obligación legal sin opción de diferir',createdAt:new Date().toISOString()},
+  {id:'c5',area:'Comercial y Marketing',objetivo:'Relanzamiento de marca',descripcion:'Campaña digital, rebranding y materiales bajo marca Aviva',monto:350000,urgencia:'Medio',necesidadFecha:'Cierre +45d',status:'En revisión',approver:'',approvalNote:'',createdAt:new Date().toISOString()},
+  {id:'c6',area:'Legal y Regulatorio',objetivo:'Cumplimiento regulatorio sanitario',descripcion:'Asesores externos para habilitaciones SUSALUD',monto:120000,urgencia:'Alto',necesidadFecha:'Cierre +15d',status:'Aprobado',approver:'Hernán I.',approvalNote:'',createdAt:new Date().toISOString()},
+];
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadAll();
+</script>
+</body>
+</html>
